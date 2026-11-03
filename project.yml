@@ -1,0 +1,54 @@
+name: ScreenSampler
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+schemes:
+  ScreenSampler:
+    build:
+      targets:
+        ScreenSampler: all
+        BroadcastExtension: all
+    run:
+      config: Debug
+
+
+targets:
+  ScreenSampler:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: App
+    settings:
+      base:
+        INFOPLIST_FILE: Config/App-Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.ScreenSampler
+        PRODUCT_NAME: ScreenSampler
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: BroadcastExtension
+        embed: true
+
+  BroadcastExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BroadcastExtension
+    settings:
+      base:
+        INFOPLIST_FILE: Config/BroadcastExtension-Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.ScreenSampler.BroadcastExtension
+        PRODUCT_NAME: BroadcastExtension
+        TARGETED_DEVICE_FAMILY: "1"
+        APPLICATION_EXTENSION_API_ONLY: YES
+        GENERATE_INFOPLIST_FILE: NO
