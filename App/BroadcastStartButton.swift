@@ -14,6 +14,7 @@ struct BroadcastStartButton: UIViewRepresentable {
         let picker = RPSystemBroadcastPickerView(frame: .zero)
         picker.translatesAutoresizingMaskIntoConstraints = false
         picker.showsMicrophoneButton = false
+        picker.preferredExtension = "com.example.ScreenSampler.BroadcastExtension"
 
         // Hide the default glyph visually; the system picker remains the
         // actual tappable control underneath our label.
