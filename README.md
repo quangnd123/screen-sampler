@@ -1,60 +1,15 @@
-# ScreenSampler ReplayKit prototype
+# Contextual Vocabulary prototype
 
-Prototype flow:
+The existing ReplayKit Broadcast Upload Extension now captures one JPEG per second, keeps seven in memory, and sends a batch every 30 seconds to `POST /analyze`. A late response from a canceled batch is ignored. Valid results are saved in the App Group container and shown through local notifications. Tapping a notification opens its matching screenshot.
 
-1. Open app.
-2. Tap **START**.
-3. Confirm the iOS broadcast sheet.
-4. Switch to another app.
-5. Broadcast Upload Extension receives ReplayKit video sample buffers.
-6. It encodes roughly 1 frame/second as a JPEG, resized so the longest side is at most 720 px.
-7. It keeps only the latest 7 JPEGs.
-8. Roughly every 60 seconds it snapshots the current cache and calls `MockUploader`.
+## Before building on an iPhone
 
-`MockUploader` only writes a log entry. No server is required yet.
+1. Set `backendURL` in `Shared/PrototypeConfig.swift` to the LAN address of the machine running the backend. The placeholder `192.168.1.2` must be changed. The current plist allows HTTP for LAN testing; use HTTPS before deployment outside a trusted network.
+2. Replace `com.example.ScreenSampler` bundle IDs and `group.com.example.ScreenSampler` App Group ID with IDs available in your Apple Developer team. Enable the same App Group for both app and extension in signing.
+3. From `../backnend`, install `requirements.txt`, copy `.env.example` to `.env`, fill in provider credentials and the verified vision-capable model ID, then run `uvicorn main:app --host 0.0.0.0 --port 8000`.
+4. The included `dictionary.json` is only a small seed dataset. Expand it with your licensed word/sense dataset for useful coverage.
+5. Build with the existing GitHub Actions workflow, or run `xcodegen generate` and build the `ScreenSampler` scheme on macOS. The generated IPA is unsigned; installing on a device still needs signing and App Group provisioning.
 
-## Important for iOS 26
+The app requests notification permission when opened. Start uses the existing system broadcast picker. Stop sets a shared flag checked on the next video frame; iOS may show a broadcast-ended message. The iOS status indicator can also stop the broadcast.
 
-This prototype deliberately uses ReplayKit + Broadcast Upload Extension. The project deployment target is iOS 17; that is fine for a device running iOS 26.
-
-## Edit on Ubuntu / VS Code
-
-You can edit every Swift/YAML/plist file in VS Code. Ubuntu cannot compile UIKit/ReplayKit because the iOS SDK comes with Xcode on macOS.
-
-An optional GitHub Actions workflow is included at `.github/workflows/compile.yml`. It only checks that the project compiles; it deliberately disables code signing and does not produce an installable iPhone IPA.
-
-## Bundle IDs
-
-Before device signing, replace these two IDs if needed:
-
-- `com.example.ScreenSampler`
-- `com.example.ScreenSampler.BroadcastExtension`
-
-They occur in `project.yml`, `App/ContentView.swift`, and the extension logging subsystem strings.
-
-## Generate the Xcode project on macOS/CI
-
-```bash
-brew install xcodegen
-xcodegen generate
-```
-
-Then build the `ScreenSampler` scheme.
-
-## Tuning
-
-Edit `BroadcastExtension/SampleHandler.swift`:
-
-- `sampleInterval = 1.0`
-- `uploadInterval = 60.0`
-- `maxCachedFrames = 7`
-
-Edit JPEG settings here:
-
-```swift
-FrameEncoder(maxDimension: 720, jpegQuality: 0.55)
-```
-
-## Later: real POST
-
-Replace `MockUploader.upload(frames:)` with URLSession code. Keep the cached batch small because broadcast extensions are memory-constrained.
+Test on a physical iPhone: switching apps, slow reading, fast scrolling, video, notification tap for several results, eviction after six results, and Stop. Linux cannot compile ReplayKit/UIKit code, so the GitHub macOS build is still needed.

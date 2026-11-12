@@ -27,9 +27,11 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: App
+      - path: Shared
     settings:
       base:
         INFOPLIST_FILE: Config/App-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config/App.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.example.ScreenSampler
         PRODUCT_NAME: ScreenSampler
         TARGETED_DEVICE_FAMILY: "1"
@@ -44,9 +46,11 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: BroadcastExtension
+      - path: Shared
     settings:
       base:
         INFOPLIST_FILE: Config/BroadcastExtension-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config/BroadcastExtension.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.example.ScreenSampler.BroadcastExtension
         PRODUCT_NAME: BroadcastExtension
         TARGETED_DEVICE_FAMILY: "1"

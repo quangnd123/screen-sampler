@@ -16,6 +16,7 @@ struct BroadcastStartButton: View {
 
     var body: some View {
         Button {
+            UserDefaults(suiteName: PrototypeConfig.appGroup)?.set(false, forKey: "stopRequested")
             for case let button as UIButton in picker.subviews {
                 button.sendActions(for: .allTouchEvents)
             }
