@@ -4,9 +4,9 @@ The existing ReplayKit Broadcast Upload Extension now captures one JPEG per seco
 
 ## Before building on an iPhone
 
-1. Set `backendURL` in `Shared/PrototypeConfig.swift` to the LAN address of the machine running the backend. The placeholder `192.168.1.2` must be changed. The current plist allows HTTP for LAN testing; use HTTPS before deployment outside a trusted network.
+1. `backendURL` in `Shared/PrototypeConfig.swift` points to `http://100.99.124.75:8000/analyze`. The current plist allows HTTP for network testing; use HTTPS before deployment outside a trusted network.
 2. Replace `com.example.ScreenSampler` bundle IDs and `group.com.example.ScreenSampler` App Group ID with IDs available in your Apple Developer team. Enable the same App Group for both app and extension in signing.
-3. From `../backnend`, install `requirements.txt`, copy `.env.example` to `.env`, fill in provider credentials and the verified vision-capable model ID, then run `uvicorn main:app --host 0.0.0.0 --port 8000`.
+3. From `../backend`, install `requirements.txt`, then run `uvicorn main:app --host 0.0.0.0 --port 8000`. Dummy responses are enabled by default and need no Qwen credentials. Set `USE_DUMMY_VLM=false` and configure `QWEN_MODEL`, `QWEN_BASE_URL`, and `QWEN_API_KEY` when ready to use Qwen.
 4. The included `dictionary.json` is only a small seed dataset. Expand it with your licensed word/sense dataset for useful coverage.
 5. Build with the existing GitHub Actions workflow, or run `xcodegen generate` and build the `ScreenSampler` scheme on macOS. The generated IPA is unsigned; installing on a device still needs signing and App Group provisioning.
 
