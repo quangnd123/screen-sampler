@@ -16,6 +16,10 @@ final class Analyzer {
     private var activeID: String?
     private var activeFrames: [Data] = []
 
+    private func setStatus(_ value: String) {
+        UserDefaults(suiteName: PrototypeConfig.appGroup)?.set(value, forKey: "analysisStatus")
+    }
+
     func stop() {
         lock.lock()
         defer { lock.unlock() }
@@ -52,21 +56,66 @@ final class Analyzer {
             guard let self else { return }
             self.lock.lock()
             defer { self.lock.unlock() }
-            guard self.activeID == id, error == nil,
-                  let http = response as? HTTPURLResponse, http.statusCode == 200,
-                  let data, let result = try? JSONDecoder().decode(AnalyzeResponse.self, from: data),
-                  result.request_id == id, result.status == "FOUND",
+            guard self.activeID == id else { return }
+            if let error {
+                NSLog("ScreenSampler analyze request failed: %@", error.localizedDescription)
+                ActivityLog.append("Request lỗi: \(error.localizedDescription)")
+                self.setStatus("Lỗi gửi request: \(error.localizedDescription)")
+                return
+            }
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                NSLog("ScreenSampler analyze HTTP status: %d", (response as? HTTPURLResponse)?.statusCode ?? -1)
+                ActivityLog.append("HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                self.setStatus("Server trả HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                return
+            }
+            guard let data, let result = try? JSONDecoder().decode(AnalyzeResponse.self, from: data) else {
+                NSLog("ScreenSampler analyze response decode failed")
+                ActivityLog.append("Không đọc được response")
+                self.setStatus("Không đọc được response")
+                return
+            }
+            guard result.request_id == id else {
+                NSLog("ScreenSampler analyze request ID mismatch")
+                ActivityLog.append("Response sai request ID")
+                return
+            }
+            guard result.status == "FOUND" else {
+                NSLog("ScreenSampler analyze status: %@", result.status)
+                ActivityLog.append("Response: \(result.status)")
+                self.setStatus("Response: \(result.status)")
+                return
+            }
+            guard
                   let index = result.frame_index, self.activeFrames.indices.contains(index),
                   let word = result.word, let sense = result.sense_idx,
-                  let meaning = result.dictionary_meaning else { return }
+                  let meaning = result.dictionary_meaning else {
+                NSLog("ScreenSampler analyze FOUND response missing fields")
+                ActivityLog.append("Response FOUND thiếu dữ liệu")
+                return
+            }
             let stored = StoredResult(requestID: id, word: word, senseIndex: sense, meaning: meaning, createdAt: Date())
-            guard ResultStore.save(stored, image: self.activeFrames[index]) else { return }
+            guard ResultStore.save(stored, image: self.activeFrames[index]) else {
+                ActivityLog.append("Không lưu được kết quả vào App Group")
+                self.setStatus("Không lưu được kết quả vào App Group")
+                return
+            }
             let content = UNMutableNotificationContent()
             content.title = word
             content.body = meaning
             content.sound = .default
             content.userInfo = ["request_id": id]
-            UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: nil))
+            UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: nil)) { error in
+                if let error {
+                    NSLog("ScreenSampler notification scheduling failed: %@", error.localizedDescription)
+                    ActivityLog.append("Lỗi thông báo: \(error.localizedDescription)")
+                    self.setStatus("Lỗi thông báo: \(error.localizedDescription)")
+                } else {
+                    NSLog("ScreenSampler notification scheduled for request %@", id)
+                    ActivityLog.append("Đã tạo thông báo: \(word)")
+                    self.setStatus("Đã gửi thông báo: \(word)")
+                }
+            }
         }
         lock.lock()
         task = newTask

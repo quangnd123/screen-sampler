@@ -24,7 +24,10 @@ enum ResultStore {
     }
 
     static func save(_ result: StoredResult, image: Data) -> Bool {
-        guard let folder else { return false }
+        guard let folder else {
+            NSLog("ScreenSampler App Group container unavailable")
+            return false
+        }
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try image.write(to: folder.appendingPathComponent(result.id + ".jpg"), options: .atomic)
@@ -42,6 +45,7 @@ enum ResultStore {
             }
             return true
         } catch {
+            NSLog("ScreenSampler result save failed: %@", error.localizedDescription)
             return false
         }
     }
